@@ -1,0 +1,10 @@
+{
+  "presets": [
+    "babel-preset-env", 
+    "stage-0", "react"],
+  "plugins": [
+    "react-hot-loader/babel",
+    "babel-plugin-transform-runtime",
+    "transform-decorators-legacy"
+  ]
+}

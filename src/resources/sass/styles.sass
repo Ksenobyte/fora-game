@@ -1,0 +1,165 @@
+#root
+  height: 100vh
+
+.container
+  width: 100%
+  height: 100%
+  background: #B2DFDB
+
+p
+  margin: 0
+.lobby
+  display: flex
+  justify-content: center
+  align-items: center
+  width: 100%
+  height: 100%
+  &__wrapper
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    width: 30%
+    padding: 20px
+    border: 1px solid black
+  &__status
+    font-size: 20px
+    margin-bottom: 10px
+    animation: waiting 2s infinite ease-in-out
+  &__clipboard
+    flex-wrap: wrap
+    text-align: center
+    &-text
+      padding-bottom: 10px
+    &-link
+      display: inline-block
+      padding: 5px 15px 5px 15px
+      border: 1px dashed black
+      cursor: pointer
+
+.interface
+  display: flex
+  justify-content: space-between
+  flex-direction: column
+  align-items: center
+  width: 100%
+  height: 100%
+  &__ready
+    background: greenyellow
+  &__opponent,
+  &__my
+    display: flex
+    flex-direction: column
+    align-items: center
+    width: 50%
+    height: 30%
+    border: 1px solid black
+    &-persona
+      background-image: url("./../icons/persona.jpg")
+      background-size: contain
+      background-repeat: no-repeat
+      background-position: center
+      width: 20%
+      height: 35%
+  &__opponent
+    justify-content: flex-start
+    border-top: 0
+    &-away
+      opacity: 0.5
+    &-icons
+      display: flex
+      justify-content: space-between
+      align-items: center
+    &-icons > *
+      width: 15%
+      height: 70%
+      cursor: pointer
+      transform: rotate(180deg)
+      &:nth-child(1),
+      &:nth-child(5)
+        transform: translateY(-40%) rotate(180deg)
+      &:nth-child(3)
+        transform: translateY(40%) rotate(180deg)
+  &__my
+    justify-content: flex-end
+    border-bottom: 0
+    &-icons
+      display: flex
+      justify-content: space-between
+      align-items: center
+    &-icons > *
+      width: 15%
+      height: 70%
+      cursor: pointer
+      &:nth-child(1),
+      &:nth-child(5)
+        transform: translateY(40%)
+      &:nth-child(3)
+        transform: translateY(-40%)
+
+  &__score
+    position: absolute
+    width: 4%
+    height: 10%
+    background: #26A69A
+    right: 0
+    top: 45%
+    &-separator
+      width: 100%
+      height: 2px
+      background: #000
+    &-opponent,
+    &-my
+      display: flex
+      justify-content: center
+      align-items: center
+      width: 100%
+      height: 50%
+
+.transition
+  transition: transform 500ms, opacity 300ms
+  transition-delay: 0ms, 500ms
+
+.interface__my-icons
+  &> .move_my_lizard
+    transform: translateY(-24vh) translateX(21.5vw)
+  &> .move_my_rock
+    transform: translateY(-24vh) translateX(10.5vw)
+  &> .move_my_paper
+    transform: translateY(-24vh)
+  &> .move_my_scissors
+    transform: translateY(-24vh) translateX(-10.5vw)
+  &> .move_my_spock
+    transform: translateY(-24vh) translateX(-21.5vw)
+
+.interface__opponent-icons
+  &> .move_opponent_lizard
+    transform: translateY(24vh) translateX(21.5vw) rotate(180deg)
+  &> .move_opponent_rock
+    transform: translateY(24vh) translateX(10.5vw) rotate(180deg)
+  &> .move_opponent_paper
+    transform: translateY(24vh) rotate(180deg)
+  &> .move_opponent_scissors
+    transform: translateY(24vh) translateX(-10.5vw) rotate(180deg)
+  &> .move_opponent_spock
+    transform: translateY(24vh) translateX(-21.5vw) rotate(180deg)
+
+.loose
+  opacity: 0.3
+
+
+
+@keyframes waiting
+  0%
+    opacity: 1
+  50%
+    opacity: 0
+  100%
+    opacity: 1
+
+
+
+
+
+
+

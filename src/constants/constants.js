@@ -1,0 +1,2 @@
+export const SET_INVITE_CODE = 'SET_INVITE_CODE';
+
