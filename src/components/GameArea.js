@@ -1,7 +1,8 @@
 import React from 'react'
-import Score from "./Score";
-import PlayerArea from "./PlayerArea";
 
+import Score from './Score';
+import PlayerArea from './PlayerArea';
+import Chat from './chat/Chat';
 
 
 const GameArea = () => (

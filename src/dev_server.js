@@ -9,6 +9,7 @@ import { AppContainer } from 'react-hot-loader'
 import { createStore, applyMiddleware } from 'redux'
 import { Provider } from 'react-redux'
 import thunk from 'redux-thunk'
+import random from 'random-string-generator'
 
 import App from './components/App'
 
@@ -46,7 +47,9 @@ app.get('*', async function (req, res) {
                 adress: "localhost",
                 port: "3080"
             },
-            code: urlCode //код в итоге пишется в редукс
+            code: urlCode, //код в итоге пишется в редукс
+            myId: '',
+            nickname: ''
         }
     };
 
@@ -104,11 +107,12 @@ let server = http.createServer(app),
     io = sock(server),
     //объект для сессий игроков
     gamePlayerSessions = {},
+    users = [],
     //конструктор для конкретной сессии
     sessionData = {
         players_count: 1,
-        setted_gestures_count: 0,
-        players: []
+        setted_gestures_count: 0
+        // players: []
     },
     //конструктор игрока
     playerData = {
@@ -120,103 +124,113 @@ let server = http.createServer(app),
     //0 - ничья
     //-1 - проиграл
     winMatrix = {
-    spock: {
-        spock: 0,
-        rock: 1,
-        paper: -1,
-        scissors: 1,
-        lizard: -1
+        spock: {
+            spock: 0,
+            rock: 1,
+            paper: -1,
+            scissors: 1,
+            lizard: -1
+        },
+        rock: {
+            spock: -1,
+            rock: 0,
+            paper: -1,
+            scissors: 1,
+            lizard: 1
+        },
+        paper: {
+            spock: 1,
+            rock: 1,
+            paper: 0,
+            scissors: -1,
+            lizard: -1
+        },
+        scissors: {
+            spock: -1,
+            rock: -1,
+            paper: 1,
+            scissors: 0,
+            lizard: 1
+        },
+        lizard: {
+            spock: 1,
+            rock: -1,
+            paper: 1,
+            scissors: -1,
+            lizard: 0
+        }
     },
-    rock: {
-        spock: -1,
-        rock: 0,
-        paper: -1,
-        scissors: 1,
-        lizard: 1
-    },
-    paper: {
-        spock: 1,
-        rock: 1,
-        paper: 0,
-        scissors: -1,
-        lizard: -1
-    },
-    scissors: {
-        spock: -1,
-        rock: -1,
-        paper: 1,
-        scissors: 0,
-        lizard: 1
-    },
-    lizard: {
-        spock: 1,
-        rock: -1,
-        paper: 1,
-        scissors: -1,
-        lizard: 0
-    }
-}
+    joinEvent = 'user_join_room',
+    globalJoinEvent = 'user_join',
+    fullLobbyEvent = 'game_is_full';
 
 
 io.on('connect', client => {
     console.log('Client connected...');
 
-    var code = '';
-    //навешиваем все неоходимое на нового игрока
+    if (client.room !== undefined) {
+        client.leave(client.room);
+    }
+    //навешиваем все необходимое на нового игрока
     client.on('join', data => {
-        code = data;
-        var playerIsAssignedToLobby = true;
-        var wslink = 'gamelink_' + code;
-        if (gamePlayerSessions[code] == undefined) { //создание игровой сессии
-            gamePlayerSessions[code] = { ...sessionData };
-            gamePlayerSessions[code]['players'][1] = { ...playerData };
-            client.emit(wslink, { //отсылаем присвоенный id серверу
-                text: 'player id',
-                payload: 1
-            })
-        } else if (gamePlayerSessions[code]['players_count'] == 1) { // подключение игрока к существующей сессии
-            gamePlayerSessions[code]['players_count']++;
+        client.room = data.code;
+        client.uid = data.id;
+        users[client.uid] = client;
+        client.broadcast.emit(globalJoinEvent, client.uid); // эвент для подключения к общему чату
+        let playerIsAssignedToLobby = true;
+        let wslink = 'gamelink_' + client.room;
+        if (gamePlayerSessions[client.room] == undefined) { //создание игровой сессии
+            gamePlayerSessions[client.room] = { ...sessionData, players: [] };
+            gamePlayerSessions[client.room]['players'][client.uid] = { ...playerData };
+            client.join(client.room);
+        } else if (gamePlayerSessions[client.room]['players_count'] == 1) { // подключение игрока к существующей сессии
+            gamePlayerSessions[client.room]['players_count']++;
 
-            let playerId = gamePlayerSessions[code]['players_count'];
-            gamePlayerSessions[code]['players'][playerId] = { ...playerData };
-            client.broadcast.emit(wslink, 'player joined');
-            client.emit(wslink, {//отсылаем присвоенный id серверу
-                text: 'player id',
-                payload: playerId
-            })
+            gamePlayerSessions[client.room]['players'][client.uid] = { ...playerData };
+            client.join(client.room)
+            client.broadcast.to(client.room).emit(joinEvent, client.uid); // эвент для подключения к чату комнаты
         } else { //обработка переполнения сессии, не позволяет подключаться на прослушку сокета
-            client.emit(wslink, 'game already is full');
+            client.emit(fullLobbyEvent);
             playerIsAssignedToLobby = false;
         }
 
         if (playerIsAssignedToLobby) {
             client.on(wslink, data => {
+
                 if (data.text != undefined) { //пакет с заголовком
                     if (data.text == "gesture") { //пришел жест от клиента
-                        gamePlayerSessions[code]['players'][data.payload.id]['gesture'] = data.payload.gesture;
+
+                        gamePlayerSessions[client.room]['players'][data.payload.id]['gesture'] = data.payload.gesture;
+
 
                         if (data.payload.gesture != null) { // если жест обнулился
 
-                            gamePlayerSessions[code]['setted_gestures_count']++;
-                            client.broadcast.emit(wslink, { //отсылаем сведения клиентам, что оппонент сделал свой выбор
+                            gamePlayerSessions[client.room]['setted_gestures_count']++;
+                            client.broadcast.to(client.room).emit(wslink, { //отсылаем сведения клиентам, что оппонент сделал свой выбор
                                 text: "gesture status",
                                 payload: "ready"
                             });
 
                         } else {
-                            gamePlayerSessions[code]['setted_gestures_count']--;
+                            gamePlayerSessions[client.room]['setted_gestures_count']--;
                         }
 
+                        if (gamePlayerSessions[client.room]['players_count'] == gamePlayerSessions[client.room]['setted_gestures_count']) {//если выбрано столько же жестов сколько и игроков
 
-                        if (gamePlayerSessions[code]['players_count'] == gamePlayerSessions[code]['setted_gestures_count']) {//если выбрано столько же жестов сколько и игроков
 
-                            let opponentId = 1
-                            if (data.payload.id == 1) {
-                                opponentId = 2;
+                            let opponentId = '';
+                            for (let id in gamePlayerSessions[client.room]['players']) {
+                                if (id != data.payload.id) {
+                                    opponentId = id;
+                                    break;
+                                }
                             }
+
+
+
                             //переприсваивание для более коротких имен и читабельности
-                            let myGesture = gamePlayerSessions[code]['players'][data.payload.id]['gesture'],
-                                opponentGesture = gamePlayerSessions[code]['players'][opponentId]['gesture'];
+                            let myGesture = gamePlayerSessions[client.room]['players'][data.payload.id]['gesture'],
+                                opponentGesture = gamePlayerSessions[client.room]['players'][opponentId]['gesture'];
 
                             client.emit(wslink, { //отправляем результаты
                                 text: 'round result',
@@ -225,7 +239,7 @@ io.on('connect', client => {
                                     result: winMatrix[myGesture][opponentGesture]
                                 }
                             });
-                            client.broadcast.emit(wslink, { //отправляем результаты
+                            client.broadcast.to(client.room).emit(wslink, { //отправляем результаты
                                 text: 'round result',
                                 payload: {
                                     gesture: myGesture,
@@ -240,6 +254,27 @@ io.on('connect', client => {
                 }
             })
         }
+
+        client.on("webrtc", function(message) {
+            console.log(message)
+            if (message.to !== undefined && users[message.to] !== undefined) {
+                // Если в сообщении указан получатель и этот получатель известен серверу, отправляем сообщение только ему...
+                users[message.to].emit("webrtc", message);
+            } else {
+                // ...иначе считаем сообщение широковещательным
+                client.broadcast.to(client.room).emit("webrtc", message);
+            }
+        });
+
+        // Кто-то отсоединился
+        client.on("disconnect", function() {
+            // При отсоединении клиента, оповещаем об этом остальных
+            client.broadcast.to(client.room).emit("leave", client.uid);
+            delete users[client.uid];
+            if (gamePlayerSessions[client.room]['players_count'] === 0) { //если игроков в сессии не осталось
+                delete gamePlayerSessions[client.room];//удаляем игровую сессию
+            }
+        });
     })
 })
 

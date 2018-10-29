@@ -116,6 +116,76 @@ p
       width: 100%
       height: 50%
 
+  &__chat
+    display: flex
+    position: absolute
+    width: 20%
+    height: 30%
+    left: 0
+    bottom: 0
+    flex-direction: column
+    justify-content: flex-start
+    border: 1px solid black
+    &-header
+      width: 100%
+      height: 10%
+      border-bottom: 1px solid black
+    &-tabs
+      width: 100%
+      height: 90%
+      &_element
+        display: none //flex
+        flex-direction: column-reverse
+        justify-content: flex-start
+        height: 100%
+    &-input
+      display: flex
+
+      width: 100%
+      & input
+        width: 100%
+        min-width: 50px
+    &-preview
+      &-heading, &-text, &-input
+        display: flex
+        justify-content: center
+        align-items: center
+      &-heading, &-text
+        height: 20%
+      &-input
+        height: 60%
+        & form
+          display: flex
+          flex-direction: column
+
+.tab
+  &__header
+    &-element
+      display: inline-block
+      height: 100%
+      line-height: 170%
+      padding: 0 5px 0 5px
+      border-right: 1px solid black
+      &:hover,&-active
+        cursor: pointer
+      &:hover
+        background-color: #54a6a4
+      &-active
+        background-color: #26A69A
+      &-active:hover
+        background-color: #26A69A
+
+  &__message
+    width: 100%
+    word-wrap: break-word
+    &-text
+      padding-left: 2px
+  &-active
+    display: flex
+
+
+
+
 .transition
   transition: transform 500ms, opacity 300ms
   transition-delay: 0ms, 500ms
