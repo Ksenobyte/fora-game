@@ -53,7 +53,6 @@ export default class App extends Component
                 this.bindedGameActions.setOpponentIcon(data.payload);
             } else if (data.text == "gesture status"){
                 if (data.payload == 'ready') {
-                    console.log(data);
                     this.bindedGameActions.setReadyStatus('opponent');
                 }
             } else if (data.text == "round result") {
@@ -232,7 +231,7 @@ export default class App extends Component
                 }
                 {
                     this.chatInterface != undefined &&
-                    <Chat chatInterface={this.chatInterface} />
+                    <Chat socket={this.socket} chatInterface={this.chatInterface} />
                 }
 
             </Screen>

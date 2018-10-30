@@ -256,7 +256,6 @@ io.on('connect', client => {
         }
 
         client.on("webrtc", function(message) {
-            console.log(message)
             if (message.to !== undefined && users[message.to] !== undefined) {
                 // Если в сообщении указан получатель и этот получатель известен серверу, отправляем сообщение только ему...
                 users[message.to].emit("webrtc", message);
@@ -265,6 +264,22 @@ io.on('connect', client => {
                 client.broadcast.to(client.room).emit("webrtc", message);
             }
         });
+
+        client.on("nickname_check", data => {
+            let answer = {
+                free: true,
+                nickname: data
+            }
+            for ( let user in users ) {
+                if (users[user].nickname == data) {
+                    answer.free = false;
+                }
+            }
+            if (answer.free) {
+                client.nickname = data;
+            }
+            client.emit("nickname_check", answer);
+        })
 
         // Кто-то отсоединился
         client.on("disconnect", function() {

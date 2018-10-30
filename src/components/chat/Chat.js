@@ -18,11 +18,30 @@ export default class Chat extends PureComponent {
     setActiveChat = bindActionCreators(setActiveChat, this.props.dispatch);
     setNickname = bindActionCreators(setNickname, this.props.dispatch);
 
+    state = {
+        chatLoginText: 'Enter nickname to continue'
+    };
+
+    constructor(props) {
+        super(props);
+        this.props.socket.on('nickname_check', (data) => {
+            if ( data.free === true ) {
+                this.setNickname(data.nickname);
+                this.props.socket.off('nickname_check');
+            } else {
+                this.setState({
+                    chatLoginText: 'nickname is busy, take another'
+                })
+            }
+        })
+    }
+
     onNicknameFormSubmit = (e) => {
         e.preventDefault()
         if (this.refs.nickname_input.value != '' && this.refs.nickname_input.value != undefined) {
             //не пустой никнейм
-            this.setNickname(this.refs.nickname_input.value);
+            this.props.socket.emit('nickname_check', this.refs.nickname_input.value)
+            //this.setNickname(this.refs.nickname_input.value);
         }
     }
 
@@ -55,7 +74,7 @@ export default class Chat extends PureComponent {
                 nickname == '' &&
                 <Fragment>
                     <div className="interface__chat-preview-heading">Chat</div>
-                    <div className="interface__chat-preview-text">Enter nickname to continue</div>
+                    <div className="interface__chat-preview-text">{this.state.chatLoginText}</div>
                     <div className="interface__chat-preview-input">
                         <form onSubmit={(e)=>this.onNicknameFormSubmit(e)}>
                             <input type="text" ref="nickname_input"/>
